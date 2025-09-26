@@ -1,50 +1,54 @@
 package com.budget.app.service;
 
 import java.util.List;
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.budget.app.entity.User;
-import com.budget.app.respository.*;
+import com.budget.app.respository.UserRepository;
+
 
 @Service
 public class UserService {
+     private final UserRepository userRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    // Constructor
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
-    // Create User
+    // Create user
     public User createUser(User user) {
         return userRepository.save(user);
     }
 
-    // Get All Users
+    // Get all users
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // Get User By ID
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
+    // Get single user
+    public User getUserById(Long id, String msg) {
+        return userRepository.findById(id).orElse(null);
     }
 
-    // Update User
-    public User updateUser(Long id, User updatedUser) {
-        return userRepository.findById(id).map(user -> {
-            user.setName(updatedUser.getName());
-            user.setEmail(updatedUser.getEmail());
-            user.setPassword(updatedUser.getPassword());
-            return userRepository.save(user);
-        }).orElseThrow(() -> new RuntimeException("User not found with id " + id));
-    }
+    //update by id
+    public User updateUser(Long id, User userDetails) {
+    return userRepository.findById(id)
+            .map(user -> {
+                user.setName(userDetails.getName());
+                user.setEmail(userDetails.getEmail());
+                // add other fields you want to update
+                return userRepository.save(user);
+            })
+            .orElse(null);
+}
 
-    // Delete User
-    public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found with id " + id);
-        }
-        userRepository.deleteById(id);
-    }
+// delete by id
+public boolean deleteUser(Long id) {
+    return userRepository.findById(id)
+            .map(user -> {
+                userRepository.delete(user);
+                return true;
+            })
+            .orElse(false);
+}
 }

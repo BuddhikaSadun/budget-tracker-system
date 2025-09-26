@@ -1,7 +1,6 @@
 package com.budget.app.entity;
 
 import java.time.LocalDateTime;
-
 import jakarta.persistence.*;
 
 
