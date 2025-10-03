@@ -1,5 +1,6 @@
 package com.budget.app.controller;
 
+import com.budget.app.dto.ApiResponse;
 import com.budget.app.entity.Transaction;
 import com.budget.app.service.TransactionService;
 
@@ -21,14 +22,18 @@ public class TransactionController {
     }
 
     // ✅ Create transaction
-    @PostMapping
-    public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction) {
-        Transaction created = transactionService.createTransaction(transaction);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
+     @PostMapping("/create")
+    public ResponseEntity<ApiResponse<Transaction>> createTransaction(@RequestBody Transaction transaction) {
+        try {
+            Transaction saveTransaction = transactionService.createTransaction(transaction);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, "Transaction created ", saveTransaction));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, e.getMessage(), null));
+        }
     }
 
     // ✅ Get all transactions
-    @GetMapping
+    @GetMapping("/")
     public ResponseEntity<List<Transaction>> getAllTransactions() {
         List<Transaction> transactions = transactionService.getAllTransactions();
         return ResponseEntity.ok(transactions);
@@ -43,7 +48,7 @@ public class TransactionController {
     }
 
     // ✅ Update transaction
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<Transaction> updateTransaction(@PathVariable Long id, @RequestBody Transaction transaction) {
         try {
             Transaction updated = transactionService.updateTransaction(id, transaction);
@@ -54,7 +59,7 @@ public class TransactionController {
     }
 
     // ✅ Delete transaction
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteTransaction(@PathVariable Long id) {
         try {
             transactionService.deleteTransaction(id);

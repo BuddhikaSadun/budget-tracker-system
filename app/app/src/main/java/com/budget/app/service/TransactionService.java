@@ -1,6 +1,9 @@
 package com.budget.app.service;
 
+import com.budget.app.entity.Budget;
 import com.budget.app.entity.Transaction;
+import com.budget.app.entity.TransactionType;
+import com.budget.app.entity.User;
 import com.budget.app.respository.*;
 
 import org.springframework.stereotype.Service;
@@ -12,16 +15,48 @@ import java.util.Optional;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+private final UserRepository userRepository; 
+    private final BudgetRepository budgetRepository;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    public TransactionService(TransactionRepository transactionRepository, BudgetRepository budgetRepository,UserRepository userRepository) {
         this.transactionRepository = transactionRepository;
+        this.budgetRepository = budgetRepository;
+        this.userRepository = userRepository;
     }
 
-    // ✅ Create
-    public Transaction createTransaction(Transaction transaction) {
-        return transactionRepository.save(transaction);
+    // ✅ Create transaction with budget check
+  public Transaction createTransaction(Transaction transaction) {
+    // Fetch full user details from DB using userId
+    Long userId = transaction.getUser().getUserId();
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found with id " + userId));
+    transaction.setUser(user); // set the full user object
+
+    // Budget check for EXPENSE
+    if (transaction.getType() == TransactionType.EXPENSE) {
+        // Get total expenses for this user
+        int totalExpenses = transactionRepository.findAll().stream()
+                .filter(t -> t.getUser().getUserId().equals(user.getUserId()) &&
+                             t.getType() == TransactionType.EXPENSE)
+                .mapToInt(Transaction::getAmount)
+                .sum();
+
+        int newTotal = totalExpenses + transaction.getAmount();
+
+        // Find user’s budget
+        Budget budget = budgetRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Budget not set for user"));
+
+        if (newTotal > budget.getAmount()) {
+            throw new RuntimeException("Transaction exceeds budget! Allowed: "
+                    + budget.getAmount() + ", Current: " + totalExpenses);
+        }
     }
 
+    return transactionRepository.save(transaction);
+}
+
+    
     // ✅ Get all
     public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll();

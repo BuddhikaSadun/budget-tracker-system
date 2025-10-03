@@ -22,16 +22,13 @@ public class Transaction {
 
     private LocalDateTime transactionDate = LocalDateTime.now();
 
- // Many transactions belong to one user
+    @Column(nullable = false)
+    private String category;
+
+    // Many transactions belong to one user
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    // Many transactions belong to one category
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
-
 
     //Getters and Setters
     public Long getTransactionId() {
@@ -74,14 +71,15 @@ public class Transaction {
         this.user = user;
     }
 
-    public Category getCategory() {
+    public String getCategory() {
         return category;
     }
 
-    public void setCategory(Category category) {
+    public void setCategory(String category) {
         this.category = category;
     }
 
+   
 
 
 }
