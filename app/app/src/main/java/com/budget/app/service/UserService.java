@@ -48,6 +48,7 @@ public boolean deleteUser(Long id) {
             .map(user -> {
                 userRepository.delete(user);
                 return true;
+                
             })
             .orElse(false);
 }

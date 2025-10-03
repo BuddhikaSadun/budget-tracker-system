@@ -3,10 +3,12 @@ package com.budget.app.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.budget.app.entity.User;
 import com.budget.app.service.UserService;
+import com.budget.app.dto.ApiResponse;
 
 
 
@@ -23,8 +25,17 @@ public class UserController {
      // Create User (POST)
     @PostMapping("/create")
     @ResponseStatus(code= HttpStatus.CREATED)
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+       public ResponseEntity<ApiResponse<User>> createUser(@RequestBody User user) {
+        try {
+            User savedUser = userService.createUser(user);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(new ApiResponse<>(true, "User created successfully!", savedUser));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(false, "Failed to create user: " + e.getMessage(), null));
+        }
     }
 
     // Get all Users (GET)
@@ -41,18 +52,28 @@ public class UserController {
 
     // Update User (PUT)
 @PutMapping("/update/{id}")
-public User updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-    return userService.updateUser(id, userDetails);
+public <T> ResponseEntity<ApiResponse<User>> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+    try {
+       User updateUser = userService.updateUser(id, userDetails);
+       return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true,"User Updated successfully",updateUser));
+    } catch (Exception e) {
+       
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false,"Failed to update user" + e.getMessage(),null));
+    }
 }
 
 // Delete User (DELETE)
 @DeleteMapping("/delete/{id}")
-@ResponseStatus(HttpStatus.NO_CONTENT)
-public void deleteUser(@PathVariable Long id) {
+public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
     boolean deleted = userService.deleteUser(id);
-    if (!deleted) {
-        throw new RuntimeException("User not found with id " + id);
+
+    if (deleted) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "User deleted successfully", null));
+    } else {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                             .body(new ApiResponse<>(false, "User not found with id " + id, null));
     }
 }
+
 
 }
